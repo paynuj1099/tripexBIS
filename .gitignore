@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+.env
+.env.*
+!.env.example
+appsettings.Development.json
+backend/MiniBooking.IntegrationTests.Local/

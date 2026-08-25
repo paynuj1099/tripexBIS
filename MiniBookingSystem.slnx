@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/backend/">
+    <Project Path="backend/MiniBooking.Api/MiniBooking.Api.csproj" />
+    <Project Path="backend/MiniBooking.Application/MiniBooking.Application.csproj" />
+    <Project Path="backend/MiniBooking.Domain/MiniBooking.Domain.csproj" />
+    <Project Path="backend/MiniBooking.Infrastructure/MiniBooking.Infrastructure.csproj" />
+    <Project Path="backend/MiniBooking.Tests/MiniBooking.Tests.csproj" />
+  </Folder>
+</Solution>
