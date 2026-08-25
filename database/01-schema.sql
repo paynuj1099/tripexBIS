@@ -1,5 +1,5 @@
-/*Simplified and shorter schema :) */
-
+/*Simplified by AI to create a shorter schema */
+ 
 CREATE TABLE dbo.Hotel
 (
     Id INT IDENTITY(1,1) CONSTRAINT PK_Hotel PRIMARY KEY,

@@ -48,6 +48,7 @@ export type NightlyRateRange = {
   startDate: string;
   endDate: string;
   nightlyRate: number;
+  nightCount: number;
 };
 
 export function groupConsecutiveNightlyRates(
@@ -69,11 +70,13 @@ export function groupConsecutiveNightlyRates(
       expectedNextDate === line.nightDate
     ) {
       previousRange.endDate = line.nightDate;
+      previousRange.nightCount += 1;
     } else {
       ranges.push({
         startDate: line.nightDate,
         endDate: line.nightDate,
         nightlyRate: line.nightlyRate,
+        nightCount: 1,
       });
     }
 

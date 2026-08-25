@@ -4,6 +4,8 @@ import { apiRequest } from "./api/client";
 import { Detail, SortHeader } from "./components/Display";
 import { BrandLogo } from "./components/BrandLogo";
 import { DateField, HotelRoomFields } from "./components/FormFields";
+import { ArrivalIcon, BedIcon, CalendarCheckIcon, CalendarIcon, CheckIcon, PlusIcon } from "./components/Icons";
+import { SelectControl } from "./components/SelectControl";
 import type {
   AvailabilityResult,
   Booking,
@@ -57,6 +59,8 @@ function App() {
     useState<AvailabilityResult | null>(null);
   const [bookingError, setBookingError] = useState("");
   const [availabilityError, setAvailabilityError] = useState("");
+  const [bookingSubmitted, setBookingSubmitted] = useState(false);
+  const [availabilitySubmitted, setAvailabilitySubmitted] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [search, setSearch] = useState("");
@@ -75,17 +79,6 @@ function App() {
       ]);
       setRooms(loadedRooms);
       setBookings(loadedBookings);
-      const firstRoomId = loadedRooms[0]?.id;
-      if (firstRoomId) {
-        setBooking((current) => ({
-          ...current,
-          roomId: current.roomId || String(firstRoomId),
-        }));
-        setAvailability((current) => ({
-          ...current,
-          roomId: current.roomId || String(firstRoomId),
-        }));
-      }
       setLoadError("");
     } catch (error) {
       setLoadError(
@@ -132,6 +125,12 @@ function App() {
   const currentPage = Math.min(page, totalPages);
   const pageStart = (currentPage - 1) * pageSize;
   const pagedBookings = visibleBookings.slice(pageStart, pageStart + pageSize);
+  const confirmedBookings = bookings.filter(
+    (item) => item.status === "Confirmed" && item.checkOut >= today,
+  );
+  const arrivalsToday = confirmedBookings.filter(
+    (item) => item.checkIn === today,
+  ).length;
 
   useEffect(() => {
     setPage(1);
@@ -147,6 +146,16 @@ function App() {
 
   async function createBooking(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
+    setBookingSubmitted(true);
+    if (
+      !event.currentTarget.checkValidity() ||
+      !booking.roomId ||
+      !booking.checkIn ||
+      !booking.checkOut
+    ) {
+      setBookingError("Please complete all required fields.");
+      return;
+    }
     setIsCreating(true);
     setBookingError("");
     setBookingResult(null);
@@ -160,6 +169,16 @@ function App() {
         }),
       });
       setBookingResult(result);
+      setBooking({
+        roomId: "",
+        checkIn: "",
+        checkOut: "",
+        guestCount: "1",
+        guestName: "",
+        guestEmail: "",
+        guestPhone: "",
+      });
+      setBookingSubmitted(false);
       setIsBookingModalOpen(false);
       await loadData();
     } catch (error) {
@@ -193,6 +212,11 @@ function App() {
 
   async function checkAvailability(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
+    setAvailabilitySubmitted(true);
+    if (!availability.roomId || !availability.from || !availability.to) {
+      setAvailabilityError("Please complete all required fields.");
+      return;
+    }
     setAvailabilityError("");
     setAvailabilityResult(null);
     try {
@@ -229,7 +253,10 @@ function App() {
           <div>
             <div className="brand">
               <BrandLogo />
-              <span>Mini Booking Inventory</span>
+              <span>
+                <small>Tripex</small>
+                Mini Booking Inventory
+              </span>
             </div>
           </div>
           <div className="header-actions">
@@ -238,18 +265,22 @@ function App() {
               onClick={() => {
                 setAvailabilityResult(null);
                 setAvailabilityError("");
+                setAvailabilitySubmitted(false);
                 setIsAvailabilityModalOpen(true);
               }}
             >
+              <CalendarIcon className="button-icon" />
               Check availability
             </button>
             <button
               onClick={() => {
                 setBookingResult(null);
                 setBookingError("");
+                setBookingSubmitted(false);
                 setIsBookingModalOpen(true);
               }}
             >
+              <PlusIcon className="button-icon" />
               Create booking
             </button>
           </div>
@@ -261,6 +292,20 @@ function App() {
             {loadError}
           </div>
         )}
+        <section className="summary-grid" aria-label="Booking overview">
+          <article className="summary-card">
+            <div className="summary-icon reservations-icon"><CalendarCheckIcon /></div>
+            <div><span>Active reservations</span><strong>{confirmedBookings.length}</strong></div>
+          </article>
+          <article className="summary-card">
+            <div className="summary-icon arrivals-icon"><ArrivalIcon /></div>
+            <div><span>Arrivals today</span><strong>{arrivalsToday}</strong></div>
+          </article>
+          <article className="summary-card">
+            <div className="summary-icon rooms-icon"><BedIcon /></div>
+            <div><span>Rooms in inventory</span><strong>{rooms.length}</strong></div>
+          </article>
+        </section>
         <section className="card bookings-card">
           <div className="table-heading">
             <div>
@@ -285,25 +330,14 @@ function App() {
             </label>
             <label>
               Status
-              <select
-                value={statusFilter}
-                onChange={(event) => setStatusFilter(event.target.value)}
-              >
-                <option>All</option>
-                <option>Confirmed</option>
-                <option>Cancelled</option>
-              </select>
+              <SelectControl ariaLabel="Status" value={statusFilter} onChange={setStatusFilter}
+                options={["All", "Confirmed", "Cancelled"].map((value) => ({ value, label: value }))} />
             </label>
             <label>
               Rows per page
-              <select
-                value={pageSize}
-                onChange={(event) => setPageSize(Number(event.target.value))}
-              >
-                <option value="5">5</option>
-                <option value="10">10</option>
-                <option value="20">20</option>
-              </select>
+              <SelectControl ariaLabel="Rows per page" value={String(pageSize)}
+                onChange={(value) => setPageSize(Number(value))}
+                options={["5", "10", "20"].map((value) => ({ value, label: value }))} />
             </label>
           </div>
           <div
@@ -489,7 +523,11 @@ function App() {
               Times follow the selected hotel's arrival and departure policy.
               Rates are calculated per occupied night.
             </p>
-            <form onSubmit={createBooking}>
+            <form
+              className={bookingSubmitted ? "was-submitted" : ""}
+              noValidate
+              onSubmit={createBooking}
+            >
               {bookingError && (
                 <div className="banner error form-error" role="alert">
                   {bookingError}
@@ -611,7 +649,7 @@ function App() {
               </button>
             </div>
             <div className="confirmation-check" aria-hidden="true">
-              ✓
+              <CheckIcon />
             </div>
             <dl className="details-grid">
               <Detail label="Primary guest" value={bookingResult.guestName} />
@@ -647,7 +685,9 @@ function App() {
                     <span>
                       {formatNightlyRateRange(range.startDate, range.endDate)}
                     </span>
-                    <strong>{formatMoney(range.nightlyRate)}</strong>
+                    <strong>
+                      {range.nightCount} {range.nightCount === 1 ? "night" : "nights"} × {formatMoney(range.nightlyRate)}
+                    </strong>
                   </div>
                 ),
               )}
@@ -708,7 +748,11 @@ function App() {
               Times follow the selected hotel's policy. Cancelled stays are
               immediately released.
             </p>
-            <form onSubmit={checkAvailability}>
+            <form
+              className={availabilitySubmitted ? "was-submitted" : ""}
+              noValidate
+              onSubmit={checkAvailability}
+            >
               <HotelRoomFields
                 rooms={rooms}
                 roomId={availability.roomId}
@@ -741,7 +785,8 @@ function App() {
                   onChange={(to) => setAvailability({ ...availability, to })}
                 />
               </div>
-              <button className="secondary" disabled={!rooms.length}>
+              <button className="availability-submit" disabled={!rooms.length}>
+                <CalendarCheckIcon className="button-icon" />
                 Check availability
               </button>
             </form>
@@ -763,6 +808,29 @@ function App() {
                     This room already has an active booking in the selected
                     range.
                   </span>
+                )}
+                {availabilityResult.isAvailable && (
+                  <button
+                    className="availability-book-button"
+                    onClick={() => {
+                      setBooking((current) => ({
+                        ...current,
+                        roomId: availability.roomId,
+                        checkIn: availability.from,
+                        checkOut: availability.to,
+                      }));
+                      setBookingError("");
+                      setBookingSubmitted(false);
+                      setBookingResult(null);
+                      setAvailabilityResult(null);
+                      setAvailabilitySubmitted(false);
+                      setIsAvailabilityModalOpen(false);
+                      setIsBookingModalOpen(true);
+                    }}
+                  >
+                    <PlusIcon className="button-icon" />
+                    Book now
+                  </button>
                 )}
               </div>
             )}
@@ -879,7 +947,9 @@ function App() {
                     <span>
                       {formatNightlyRateRange(range.startDate, range.endDate)}
                     </span>
-                    <strong>{formatMoney(range.nightlyRate)}</strong>
+                    <strong>
+                      {range.nightCount} {range.nightCount === 1 ? "night" : "nights"} × {formatMoney(range.nightlyRate)}
+                    </strong>
                   </div>
                 ),
               )}
@@ -949,7 +1019,7 @@ function App() {
               </button>
             </div>
             <p id="cancel-description" className="intro">
-              This releases {bookingToCancel.hotelName}, room{" "}
+              This releases {bookingToCancel.hotelName}, Room{" "}
               {bookingToCancel.roomNumber}, for the selected dates. The booking
               remains in history.
             </p>

@@ -62,7 +62,7 @@ These endpoints use `sp_CreateBooking`, `sp_CancelBooking`, `sp_GetRooms`, and `
 
 **Capacity.** A value of `0` disables overbooking, while `1` allows guests above room capacity. Every booking snapshots this value in its own `OverbookingGuestAllowance` column, so later hotel changes do not alter historical booking details. A successful booking above normal capacity records `IsOverCapacity = 1`.
 
-**Primary guest contact.** Every booking requires a primary guest name, email address, and phone number. These fields support realistic booking identification and contact.
+**Primary guest contact.** I added this so every booking requires a primary guest name, email address, and phone number. These fields support realistic booking identification and contact.
 
 **Hotel arrival and departure times.** Each hotel stores its own `CheckInTime` and `CheckOutTime` to make it realistic.
 
@@ -95,5 +95,9 @@ npm run build --prefix frontend
 - **RoomRate history:** supports historical and scheduled prices and prices each night correctly; one `Room.BaseRate` could not do this.
 - **Stored procedures:** keep locking, validation, pricing, and insertion within one database operation. In more standard way, we separate each procedure for cleaner and more maintanable procedures.
 - **Minimal UI:** focuses effort on rule visibility, specific errors, loading/disabled states, and responsiveness.
-- **No UI for Management** there's no way to edit the data in frontend yet.
+- 
 
+
+## System Improvements
+- **UI for Management** Add management page to edit data in the Frontend.
+- **Availability Suggestion** If selected dates and rooms are not available, add suggestion for the nearest dates available to book.

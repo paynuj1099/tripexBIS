@@ -1,4 +1,7 @@
+import { useEffect, useState } from "react";
 import type { Room } from "../types/booking";
+import { SelectControl } from "./SelectControl";
+import { DatePicker } from "./DatePicker";
 
 export function HotelRoomFields({
   rooms,
@@ -13,46 +16,39 @@ export function HotelRoomFields({
   const hotels = [
     ...new Map(rooms.map((room) => [room.hotelId, room.hotelName])),
   ];
-  const selectedHotelId = selectedRoom?.hotelId ?? hotels[0]?.[0] ?? 0;
+  const [selectedHotelId, setSelectedHotelId] = useState(
+    selectedRoom?.hotelId ?? 0,
+  );
+
+  useEffect(() => {
+    if (selectedRoom) setSelectedHotelId(selectedRoom.hotelId);
+  }, [roomId, selectedRoom]);
+
   const hotelRooms = rooms.filter((room) => room.hotelId === selectedHotelId);
 
   function changeHotel(hotelId: number) {
-    const firstRoom = rooms.find((room) => room.hotelId === hotelId);
-    onRoomChange(firstRoom ? String(firstRoom.id) : "");
+    setSelectedHotelId(hotelId);
+    onRoomChange("");
   }
 
   return (
     <div className="form-row">
       <label>
         Hotel
-        <select
-          required
-          value={selectedHotelId}
-          onChange={(event) => changeHotel(Number(event.target.value))}
-        >
-          {hotels.map(([id, name]) => (
-            <option key={id} value={id}>
-              {name}
-            </option>
-          ))}
-        </select>
+        <SelectControl ariaLabel="Hotel" value={String(selectedHotelId)}
+          onChange={(value) => changeHotel(Number(value))}
+          options={[
+            { value: "0", label: "Select hotel", disabled: true },
+            ...hotels.map(([id, name]) => ({ value: String(id), label: name })),
+          ]} />
       </label>
       <label>
         Room
-        <select
-          required
-          value={roomId}
-          onChange={(event) => onRoomChange(event.target.value)}
-        >
-          {hotelRooms.map((room) => (
-            <option key={room.id} value={room.id}>
-              Room {room.roomNumber} · {room.capacity} guests
-              {room.overbookingGuestAllowance > 0
-                ? ` (+${room.overbookingGuestAllowance} allowed)`
-                : ""}
-            </option>
-          ))}
-        </select>
+        <SelectControl ariaLabel="Room" value={roomId} onChange={onRoomChange}
+          options={[
+            { value: "", label: "Select room", disabled: true },
+            ...hotelRooms.map((room) => ({ value: String(room.id), label: `Room ${room.roomNumber} · ${room.capacity} guests${room.overbookingGuestAllowance > 0 ? ` (+${room.overbookingGuestAllowance} allowed)` : ""}` })),
+          ]} />
       </label>
     </div>
   );
@@ -77,13 +73,7 @@ export function DateField({
         {label}
         {hint && <small>{hint}</small>}
       </span>
-      <input
-        required
-        type="date"
-        min={min}
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-      />
+      <DatePicker ariaLabel={label} min={min} value={value} onChange={onChange} />
     </label>
   );
 }
