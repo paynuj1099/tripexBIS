@@ -37,8 +37,8 @@ public sealed class BookingsController(IBookingService service) : ControllerBase
     }
     private IActionResult MapCreateError(int code, string message) => code switch
     {
-        1 => BadRequest(new ApiErrorResponse("INVALID_DATE_RANGE", message)),
-        2 => NotFound(new ApiErrorResponse("ROOM_NOT_FOUND", message)),
+        1 => BadRequest(new ApiErrorResponse("INVALID_DATE_RANGE", message)), 
+        2 => NotFound(new ApiErrorResponse("ROOM_NOT_FOUND", message)), 
         3 => Conflict(new ApiErrorResponse("BOOKING_OVERLAP", message)),
         4 => UnprocessableEntity(new ApiErrorResponse("OVER_CAPACITY", message)),
         5 => BadRequest(new ApiErrorResponse("INVALID_GUEST_COUNT", message)),

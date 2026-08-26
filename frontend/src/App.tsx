@@ -28,6 +28,7 @@ import {
 } from "./utils/formatters";
 
 const today = toDateInputValue(new Date());
+const guestNamePattern = /^[\p{L}\p{M}][\p{L}\p{M} .'\-\u2019]*$/u;
 
 function App() {
   const [rooms, setRooms] = useState<Room[]>([]);
@@ -147,13 +148,33 @@ function App() {
   async function createBooking(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     setBookingSubmitted(true);
-    if (
-      !event.currentTarget.checkValidity() ||
-      !booking.roomId ||
-      !booking.checkIn ||
-      !booking.checkOut
-    ) {
-      setBookingError("Please complete all required fields.");
+    if (!guestNamePattern.test(booking.guestName.trim())) {
+      setBookingError(
+        "Enter a valid name using letters.",
+      );
+      event.currentTarget
+        .querySelector<HTMLInputElement>('input[autocomplete="name"]')
+        ?.focus();
+      return;
+    }
+    const firstInvalidField = event.currentTarget.querySelector<HTMLInputElement>(
+      "input:invalid",
+    );
+    if (firstInvalidField) {
+      setBookingError(firstInvalidField.validationMessage);
+      firstInvalidField.focus();
+      return;
+    }
+    if (!booking.roomId) {
+      setBookingError("Please select a room.");
+      return;
+    }
+    if (!booking.checkIn) {
+      setBookingError("Please select a check-in date.");
+      return;
+    }
+    if (!booking.checkOut) {
+      setBookingError("Please select a check-out date.");
       return;
     }
     setIsCreating(true);
@@ -538,7 +559,9 @@ function App() {
                 Full name
                 <input
                   required
+                  minLength={2}
                   maxLength={150}
+                  title="Enter a valid name using letters, spaces, apostrophes, hyphens, or periods."
                   autoComplete="name"
                   value={booking.guestName}
                   onChange={(event) =>
@@ -553,6 +576,7 @@ function App() {
                     required
                     type="email"
                     maxLength={254}
+                    title="Enter a valid email address."
                     autoComplete="email"
                     value={booking.guestEmail}
                     onChange={(event) =>
@@ -565,7 +589,10 @@ function App() {
                   <input
                     required
                     type="tel"
+                    minLength={7}
                     maxLength={30}
+                    pattern={String.raw`(?=.*[0-9])[0-9+\(\) .\-]{7,30}`}
+                    title="Enter a valid phone number using digits, spaces, +, parentheses, periods, or hyphens."
                     autoComplete="tel"
                     value={booking.guestPhone}
                     onChange={(event) =>
@@ -610,7 +637,15 @@ function App() {
                 <input
                   required
                   min="1"
+                  max={
+                    selectedBookingRoom
+                      ? selectedBookingRoom.capacity +
+                        selectedBookingRoom.overbookingGuestAllowance
+                      : undefined
+                  }
+                  step="1"
                   type="number"
+                  title="Enter a whole number of guests within the room's allowed capacity."
                   value={booking.guestCount}
                   onChange={(event) =>
                     setBooking({ ...booking, guestCount: event.target.value })
