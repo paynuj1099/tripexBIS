@@ -11,4 +11,3 @@
 .env.*
 !.env.example
 appsettings.Development.json
-backend/MiniBooking.IntegrationTests.Local/

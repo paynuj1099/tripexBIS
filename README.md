@@ -80,12 +80,19 @@ If two overlapping requests target one room, the second waits. After the first c
 
 ## Tests
 
+Make sure Docker is running, then run the SQL Server integration tests:
+
 ```powershell
-dotnet test
+dotnet test backend/MiniBooking.IntegrationTests.Local/MiniBooking.IntegrationTests.Local.csproj
+```
+
+Build the frontend separately:
+
+```powershell
 npm run build --prefix frontend
 ```
 
-`NightlyRateCalculator` Tests single rates, mid-stay changes, changes on check-in and checkout, three rate periods, missing rates, and invalid date ranges.
+The integration tests start a temporary SQL Server 2022 container, install the real schema and stored procedures, and verify nightly-rate changes, back-to-back bookings, overlapping-booking rejection, and guest overcapacity rules. The container is removed when the test run finishes.
 
 
 ## Design trade-offs
